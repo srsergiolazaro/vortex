@@ -1,65 +1,107 @@
 # 🌀 Vortex CLI
 
-[![Tachyon-Tex](https://img.shields.io/badge/Engine-Tectonic-blueviolet?style=for-the-badge)](https://latex.taptapp.xyz)
-[![Latencia](https://img.shields.io/badge/Latency-%3C1s-green?style=for-the-badge)](https://latex.taptapp.xyz)
+<p align="center">
+  <img src="docs/assets/banner.png" alt="Vortex Banner" width="600px">
+</p>
 
-Ultra-fast LaTeX compilation CLI. Compila tus documentos LaTeX en la nube con latencia insignificante y feedback instantáneo.
+<p align="center">
+  <a href="https://www.npmjs.com/package/vortex"><img src="https://img.shields.io/npm/v/vortex?style=for-the-badge&logo=npm" alt="NPM Version"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Fair_Source-blue.svg?style=for-the-badge" alt="License: Fair Source"></a>
+  <a href="https://latex.taptapp.xyz"><img src="https://img.shields.io/badge/Engine-Tectonic-blueviolet?style=for-the-badge&logo=rust" alt="Tachyon-Tex Engine"></a>
+  <a href="https://latex.taptapp.xyz"><img src="https://img.shields.io/badge/Latency-%3C1s-green?style=for-the-badge" alt="Real-time Latency"></a>
+</p>
 
-## 🚀 Características
+---
 
-- **Ultra-Fast**: Compilación basada en Rust (Tectonic) optimizada para velocidad moonshot.
-- **Zero-Config**: No necesitas instalar TeXLive, MikTeX ni dependencias pesadas localmente.
-- **Modo Watch**: Detecta cambios en tus archivos y recompila automáticamente en milisegundos.
-- **Validación Inteligente**: Feedback preventivo sobre errores de sintaxis y estructura antes de la compilación.
-- **Multi-archivo**: Soporte completo para proyectos complejos, bibliografías (`.bib`), estilos (`.sty`) e imágenes.
+**Vortex CLI** is an ultra-fast, cloud-powered LaTeX compiler designed for developers who value speed and simplicity. Say goodbye to heavy local TeX distributions like TeXLive or MikTeX. Compile your documents in the cloud with sub-second latency and real-time feedback.
 
-## 📦 Instalación
+---
 
-Para instalar globalmente:
+## 🚀 Key Features
+
+*   **⚡ Lightning Fast**: Powered by the Rust-based Tectonic engine, optimized for "moonshot" speed.
+*   **📦 Zero-Config**: No local dependencies required. Just run and compile.
+*   **👀 Smart Watch Mode**: Automatically detects changes in `.tex`, `.bib`, `.sty`, and even **images** (`.png`, `.jpg`, `.jpeg`) to recompile in milliseconds.
+*   **🔍 Intelligent Validation**: Pre-flight checks on the API to catch syntax errors before the full compilation process.
+*   **📂 Recursive Project Support**: Handles complex multi-file projects, including nested asset folders.
+
+---
+
+## 🧠 How it Works
+
+<p align="center">
+  <img src="docs/assets/flow.png" alt="Vortex Workflow" width="700px">
+</p>
+
+1.  **Local Scan**: Vortex recursively discovers all required assets (TeX, styles, images) in your project.
+2.  **Pre-flight Audit**: Sends a lightweight version to the `/validate` endpoint for immediate syntax feedback.
+3.  **Cloud Compilation**: Ships project files via high-speed multipart streams to the **Tachyon-Tex** cloud infrastructure.
+4.  **Instant Sync**: Downloads and saves the resulting PDF locally, reflecting changes almost instantly.
+
+---
+
+## 📦 Installation
+
+Install the CLI globally via NPM:
 
 ```bash
-git clone https://github.com/srsergio/vortex.git
+npm install -g @srsergio/vortex
+```
+
+*(Alternatively, you can clone and link it manually)*
+
+```bash
+git clone https://github.com/srsergiolazaro/vortex.git
 cd vortex
 npm install
 npm link
 ```
 
-## 🛠️ Uso
+---
 
-### Compilación Simple
-Especifíca la carpeta que contiene tu archivo `.tex` raíz:
+## 🛠️ Usage
 
-```bash
-vortex ./my-paper
-```
-
-### Configurar Archivo de Salida
-Por defecto genera `output.pdf`, pero puedes personalizarlo:
+### Quick Start
+Compile the folder containing your root LaTeX file:
 
 ```bash
-vortex ./my-paper --output final_report.pdf
+vortex ./my-project
 ```
 
-### Modo Watch (Desarrollo en Tiempo Real)
-Compila cada vez que guardas un archivo en el directorio:
+### Custom Output
+Define a specific filename for your generated PDF:
 
 ```bash
-vortex ./my-paper --watch
+vortex ./my-project --output thesis_final.pdf
 ```
 
-## 🧠 Workflow del Sistema
+### Development (Live Recompilation)
+The `--watch` flag monitors your directory and recompiles instantly on any save:
 
-1. **Escaneo Local**: La CLI identifica todos los assets necesarios en el directorio.
-2. **Pre-flight Audit**: Se envía una versión ligera al endpoint de `/validate` para detectar errores comunes (llaves perdidas, entornos mal cerrados).
-3. **Optimized Compilation**: Se envían los archivos vía multipart al motor en la nube.
-4. **Instant Sync**: El PDF resultante se descarga y se guarda localmente de inmediato.
-
-## 📡 API Integrada
-
-Esta CLI es el cliente oficial para la infraestructura **Tachyon-Tex**:
-- **Endpoint**: `https://latex.taptapp.xyz`
-- **Engine**: Tectonic (Rust)
-- **Status**: Efímero y Stateless (Máxima privacidad).
+```bash
+vortex ./my-project --watch
+```
 
 ---
-Hecho con ❤️ por el equipo de **Tachyon-Tex**.
+
+## 📡 Infrastructure & API
+
+Vortex serves as the official CLI client for the **Tachyon-Tex** infrastructure:
+
+*   **Endpoint**: `https://latex.taptapp.xyz`
+*   **Engine**: Tectonic (Rust / XeTeX)
+*   **Privacy**: Stateless and ephemeral. Project data is processed in-memory and never stored.
+
+---
+
+## ⚖️ License
+
+This project is licensed under the **Fair Source License**.
+*   **Individual/Small Teams**: Free to use for individuals and organizations with up to 3 concurrent users.
+*   **Enterprise/Large Scale**: For use beyond 3 users, please contact us for a commercial license.
+
+For more details, see the [LICENSE](./LICENSE) file.
+
+---
+
+Built with ❤️ by the **Tachyon-Tex** team. Optimized for modern LaTeX workflows.

@@ -1,17 +1,36 @@
 {
   "name": "vortex",
   "version": "1.0.0",
-  "description": "[![Tachyon-Tex](https://img.shields.io/badge/Engine-Tectonic-blueviolet?style=for-the-badge)](https://latex.taptapp.xyz) [![Latencia](https://img.shields.io/badge/Latency-%3C1s-green?style=for-the-badge)](https://latex.taptapp.xyz)",
+  "description": "Vortex CLI: Ultra-fast cloud-based LaTeX compilation. Compile LaTeX documents in milliseconds using a high-performance Rust-powered engine without local TeX installation.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "latex",
+    "tex",
+    "compiler",
+    "tectonic",
+    "rust",
+    "cloud-latex",
+    "pdf-generator",
+    "vortex",
+    "cli",
+    "typesetting"
+  ],
+  "author": "Sergio Lázaro (srsergio)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/srsergiolazaro/vortex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/srsergiolazaro/vortex/issues"
+  },
+  "homepage": "https://github.com/srsergiolazaro/vortex#readme",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "bin": {
-    "vortex": "index.js"
+    "vortex": "./index.js"
   },
   "directories": {
     "example": "example"
