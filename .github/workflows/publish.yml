@@ -1,0 +1,41 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Automated Version Bump
+        id: version-bump
+        run: |
+          # Config git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Bump version (patch)
+          npm version patch -m "chore: bump version to %s [skip ci]"
+          
+          # Push the version commit and tag back to GitHub
+          git push origin main --tags
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
