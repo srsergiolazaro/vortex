@@ -38,34 +38,42 @@
 3.  **Cloud Compilation**: Ships project files via high-speed multipart streams to the **Tachyon-Tex** cloud infrastructure.
 4.  **Instant Sync**: Downloads and saves the resulting PDF locally, reflecting changes almost instantly.
 
----
+## 🚀 Quick Start
 
-## 📦 Installation
+You can use **qtex** immediately without installation via `npx`, or install it globally for frequent use.
 
-Install the CLI globally via NPM:
+### Option 1: Use with npx (Zero Installation)
+The easiest way to get started. No need to install anything:
+
+```bash
+npx qtex ./my-project
+```
+
+### Option 2: Global Installation
+For the best experience, install it globally on your system:
 
 ```bash
 npm install -g qtex
 ```
 
-*(Alternatively, you can clone and link it manually)*
-
+Once installed, you can simply run:
 ```bash
-git clone https://github.com/srsergiolazaro/qtex.git
-cd qtex
-npm install
-npm link
+qtex ./my-project
 ```
 
 ---
 
-## 🛠️ Usage
+## 🛠️ Commands & Options
 
-### Quick Start
-Compile the folder containing your root LaTeX file:
+### Watch Mode (Live Recompilation)
+The `--watch` flag monitors your directory and recompiles instantly on any save:
 
 ```bash
-qtex ./my-project
+# Using npx
+npx qtex ./my-project --watch
+
+# Using global install
+qtex ./my-project --watch
 ```
 
 ### Custom Output
@@ -75,11 +83,11 @@ Define a specific filename for your generated PDF:
 qtex ./my-project --output thesis_final.pdf
 ```
 
-### Development (Live Recompilation)
-The `--watch` flag monitors your directory and recompiles instantly on any save:
+### Help
+See all available options:
 
 ```bash
-qtex ./my-project --watch
+qtex --help
 ```
 
 ---
