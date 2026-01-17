@@ -17,7 +17,8 @@ const optionsSchema = {
     watch: { type: 'boolean', short: 'w' },
     output: { type: 'string', short: 'o' },
     help: { type: 'boolean', short: 'h' },
-    update: { type: 'boolean', short: 'u' }
+    update: { type: 'boolean', short: 'u' },
+    version: { type: 'boolean', short: 'v' }
 };
 
 async function main() {
@@ -29,26 +30,30 @@ async function main() {
             process.exit(0);
         }
 
-        if (values.help || positionals.length === 0) {
+        if (values.help) {
             console.log(`
 ${colors.magenta}${colors.bold}🌀 qtex CLI${colors.reset}
 Ultra-fast LaTeX compilation powered by Tachyon-Tex
 
 ${colors.bold}USAGE:${colors.reset}
-  qtex <directory> [options]
+  qtex [directory] [options]
 
 ${colors.bold}OPTIONS:${colors.reset}
   -w, --watch           Watch for changes and recompile
   -o, --output <file>   Define output filename (default: output.pdf)
   -u, --update          Update to the latest version
+  -v, --version         Show version information
   -h, --help            Show this help message
             `);
             process.exit(0);
         }
 
+        if (values.version) {
+            console.log(`qtex v${packageJson.version}`);
+            process.exit(0);
+        }
 
-
-        const directory = positionals[0];
+        const directory = positionals[0] || '.';
         console.log(`${colors.magenta}${colors.bold}\n🌀 qtex CLI v${packageJson.version} (Vanilla)${colors.reset}\n`);
 
         // Check for updates in the background
