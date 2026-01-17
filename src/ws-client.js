@@ -13,6 +13,8 @@ export class TachyonWS {
         this.isConnected = false;
         this.spinner = new Spinner('');
         this.isCompiling = false;
+        this.localHashes = new Map();  // path -> local SHA256 (to detect changes)
+        this.serverHashes = new Map(); // path -> server XXHash (to send HashRef)
     }
 
     async connect() {
@@ -30,6 +32,13 @@ export class TachyonWS {
                 const data = JSON.parse(event.data);
 
                 if (data.type === 'compile_success') {
+                    // Update Server Hashes from response
+                    if (data.blobs) {
+                        for (const [path, hash] of Object.entries(data.blobs)) {
+                            this.serverHashes.set(path, hash);
+                        }
+                    }
+
                     if (this.spinner.timer) {
                         this.spinner.succeed(`${colors.green}PDF updated in ${colors.bold}${data.compile_time_ms}ms${colors.reset}`);
                     }
@@ -76,6 +85,14 @@ export class TachyonWS {
 
         try {
             const project = await this.buildProjectPayload();
+            // Count strings vs objects to see optimization
+            const fileCount = Object.keys(project.files).length;
+            const optimizedCount = Object.values(project.files).filter(v => typeof v === 'object' && v.type === 'hash').length;
+
+            if (optimizedCount > 0) {
+                this.spinner.update(`${colors.blue}Syncing project (${colors.green}${optimizedCount}/${fileCount} cached${colors.blue})...`);
+            }
+
             this.socket.send(JSON.stringify(project));
         } catch (e) {
             this.spinner.fail(`Failed to sync: ${e.message}`);
@@ -86,8 +103,10 @@ export class TachyonWS {
     async buildProjectPayload() {
         const absoluteDir = resolve(this.directory);
         const files = await this.getProjectFiles(absoluteDir);
+        const { createHash } = await import('node:crypto');
+
         const payload = {
-            main: "main.tex", // Heuristic could be improved
+            main: "main.tex",
             files: {}
         };
 
@@ -96,13 +115,27 @@ export class TachyonWS {
             const textExts = ['.tex', '.sty', '.cls', '.bib', '.txt'];
             const base = basename(fileObj.path);
 
+            const buffer = await readFile(fileObj.path);
+
+            // Calculate local hash to detect changes
+            const localHash = createHash('sha256').update(buffer).digest('hex');
+
             if (textExts.includes(ext)) {
-                payload.files[fileObj.relative] = await readFile(fileObj.path, 'utf8');
+                // Text files - send content always (could optimize later)
+                payload.files[fileObj.relative] = buffer.toString('utf8');
                 if (base === 'main.tex') payload.main = fileObj.relative;
             } else {
-                // Binary (images)
-                const buffer = await readFile(fileObj.path);
-                payload.files[fileObj.relative] = buffer.toString('base64');
+                // Binary (images) - Use fingerprinting
+                // Check if file hasn't changed locally AND we have a valid server hash
+                if (this.localHashes.get(fileObj.relative) === localHash && this.serverHashes.has(fileObj.relative)) {
+                    // Send reference to existing server blob
+                    payload.files[fileObj.relative] = { type: 'hash', value: this.serverHashes.get(fileObj.relative) };
+                } else {
+                    // Send full content
+                    payload.files[fileObj.relative] = buffer.toString('base64');
+                    // Update local hash state
+                    this.localHashes.set(fileObj.relative, localHash);
+                }
             }
         }
 

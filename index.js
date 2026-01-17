@@ -18,7 +18,8 @@ const optionsSchema = {
     output: { type: 'string', short: 'o' },
     help: { type: 'boolean', short: 'h' },
     update: { type: 'boolean', short: 'u' },
-    version: { type: 'boolean', short: 'v' }
+    version: { type: 'boolean', short: 'v' },
+    server: { type: 'string', short: 's' }
 };
 
 async function main() {
@@ -41,6 +42,7 @@ ${colors.bold}USAGE:${colors.reset}
 ${colors.bold}OPTIONS:${colors.reset}
   -w, --watch           Watch for changes and recompile
   -o, --output <file>   Define output filename (default: output.pdf)
+  -s, --server <url>    Custom WebSocket Server URL
   -u, --update          Update to the latest version
   -v, --version         Show version information
   -h, --help            Show this help message
@@ -61,7 +63,7 @@ ${colors.bold}OPTIONS:${colors.reset}
 
         if (values.watch) {
             const { TachyonWS } = await import('./src/ws-client.js');
-            const wsClient = new TachyonWS(directory, values);
+            const wsClient = new TachyonWS(directory, { ...values, serverUrl: values.server });
             await wsClient.connect();
 
             const server = startServer();
