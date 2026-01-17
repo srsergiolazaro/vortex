@@ -49,11 +49,23 @@ The easiest way to get started. No need to install anything:
 npx qtex ./my-project
 ```
 
-### Option 2: Global Installation
-For the best experience, install it globally on your system:
-
+### Option 2: Global Installation via npm
+For the best experience if you have Node.js:
 ```bash
 npm install -g qtex
+```
+
+### Option 3: Standalone Installation (Recommended)
+Install the binary directly without Node.js or npm. Copy and paste into your terminal:
+
+**macOS / Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/srsergiolazaro/qtex/bun-bundle/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/srsergiolazaro/qtex/bun-bundle/install.ps1 | iex
 ```
 
 Once installed, you can simply run:
