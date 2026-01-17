@@ -27,6 +27,20 @@ async function saveState(state) {
 }
 
 /**
+ * Simple semver comparison (v1.2.3 format)
+ * Returns true if latest > current
+ */
+function isNewer(latest, current) {
+    const l = latest.split('.').map(Number);
+    const c = current.split('.').map(Number);
+    for (let i = 0; i < 3; i++) {
+        if (l[i] > c[i]) return true;
+        if (l[i] < c[i]) return false;
+    }
+    return false;
+}
+
+/**
  * Checks for updates in the background and launches a detached 
  * background process to update the binary if a new version is found.
  */
@@ -47,7 +61,7 @@ export async function autoUpdate(currentVersion) {
 
         await saveState({ ...state, lastCheck: now });
 
-        if (latestVersion !== currentVersion) {
+        if (isNewer(latestVersion, currentVersion)) {
             console.log(`${colors.dim}\n🚀 New version detected (${data.tag_name}). Updating silently in background...${colors.reset}`);
 
             // Platform-aware install command
@@ -79,7 +93,7 @@ export async function selfUpdate(currentVersion) {
         const data = await res.json();
         const latestVersion = data.tag_name.replace('v', '');
 
-        if (latestVersion === currentVersion) {
+        if (!isNewer(latestVersion, currentVersion)) {
             ui.success(`qtex is already up to date (${colors.bold}v${currentVersion}${colors.reset}).`);
             return;
         }
