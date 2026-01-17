@@ -1,6 +1,6 @@
 {
   "name": "qtex",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Vortex CLI: Ultra-fast cloud-based LaTeX compilation. Compile LaTeX documents in milliseconds using a high-performance Rust-powered engine without local TeX installation.",
   "main": "index.js",
   "scripts": {

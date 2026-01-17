@@ -63,9 +63,21 @@ export async function autoUpdate(currentVersion) {
     }
 }
 
-export async function selfUpdate() {
-    ui.info('Updating qtex to the latest version...');
+export async function selfUpdate(currentVersion) {
+    ui.info('Checking for updates...');
     try {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+        if (!res.ok) throw new Error('Could not contact GitHub API');
+
+        const data = await res.json();
+        const latestVersion = data.tag_name.replace('v', '');
+
+        if (latestVersion === currentVersion) {
+            ui.success(`qtex is already up to date (${colors.bold}v${currentVersion}${colors.reset}).`);
+            return;
+        }
+
+        ui.info(`New version found: ${colors.bold}v${latestVersion}${colors.reset}. Updating...`);
         const installScriptCmd = `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | bash`;
         execSync(installScriptCmd, { stdio: 'inherit' });
         ui.success('qtex has been updated successfully!');

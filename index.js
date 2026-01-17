@@ -26,7 +26,7 @@ async function main() {
         const { values, positionals } = parseArgs({ args, options: optionsSchema, allowPositionals: true });
 
         if (values.update) {
-            await selfUpdate();
+            await selfUpdate(packageJson.version);
             process.exit(0);
         }
 
