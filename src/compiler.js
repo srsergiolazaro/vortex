@@ -1,5 +1,5 @@
 import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
-import { resolve, join, extname } from 'node:path';
+import { resolve, join, extname, basename } from 'node:path';
 import { colors, ui, Spinner } from './ui.js';
 import { notifyExtension } from './server.js';
 
@@ -41,6 +41,9 @@ export async function compile(dir, options) {
             const allowedExts = ['.tex', '.bib', '.sty', '.cls', '.pdf', '.png', '.jpg', '.jpeg'];
 
             if (allowedExts.includes(ext)) {
+                // Skip the output file to avoid re-uploading it in subsequent runs
+                if (basename(fileObj.path) === outputFileName) continue;
+
                 const content = await readFile(fileObj.path);
                 const blob = new Blob([content]);
                 form.append('files', blob, fileObj.relative);
