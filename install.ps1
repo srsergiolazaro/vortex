@@ -15,12 +15,25 @@ if (-not (Test-Path $BinDir)) {
 Write-Host "🚚 Downloading $AssetName from GitHub..." -ForegroundColor Blue
 $Url = "https://github.com/$Repo/releases/latest/download/$AssetName"
 $TargetFile = Join-Path $BinDir $BinaryName
+$OldFile = "$TargetFile.old"
+
+# Handle file locking on Windows (rename running executable)
+if (Test-Path $TargetFile) {
+    try {
+        if (Test-Path $OldFile) { Remove-Item $OldFile -Force -ErrorAction SilentlyContinue }
+        Move-Item $TargetFile $OldFile -Force
+    } catch {
+        Write-Host "⚠️  Could not move existing binary. Update might fail if qtex is running." -ForegroundColor Yellow
+    }
+}
 
 try {
     Invoke-WebRequest -Uri $Url -OutFile $TargetFile -ErrorAction Stop
 } catch {
-    Write-Host "❌ Download failed. Make sure the release exists on GitHub." -ForegroundColor Red
-    exit
+    Write-Host "❌ Download failed: $($_.Exception.Message)" -ForegroundColor Red
+    # Restore backup if download failed
+    if (Test-Path $OldFile) { Move-Item $OldFile $TargetFile -Force -ErrorAction SilentlyContinue }
+    exit 1
 }
 
 # 3. Add to PATH automatically
