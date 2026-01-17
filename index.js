@@ -8,7 +8,7 @@ import { compile } from './src/compiler.js';
 import { startServer } from './src/server.js';
 import { autoUpdate, selfUpdate } from './src/updater.js';
 import { exec } from 'node:child_process';
-import packageJson from './package.json' assert { type: 'json' };
+import packageJson from './package.json' with { type: 'json' };
 
 // --- Entry Point ---
 const args = process.argv.slice(2);
@@ -73,7 +73,7 @@ ${colors.bold}OPTIONS:${colors.reset}
             await wsClient.sendProject();
 
             // Auto-open browser
-            const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+            const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start ""' : 'xdg-open';
             exec(`${openCmd} "${viewUrl}"`);
 
             watch(directory, { recursive: true }, async (event, filename) => {
@@ -96,7 +96,7 @@ ${colors.bold}OPTIONS:${colors.reset}
             // Auto-open generated PDF in the system browser
             const outputFileName = values.output || 'output.pdf';
             const outputPath = resolve(process.cwd(), directory, outputFileName);
-            const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+            const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start ""' : 'xdg-open';
             exec(`${openCmd} "${outputPath}"`);
         }
 
