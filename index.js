@@ -60,20 +60,24 @@ ${colors.bold}OPTIONS:${colors.reset}
         autoUpdate(packageJson.version);
 
         if (values.watch) {
+            const { TachyonWS } = await import('./src/ws-client.js');
+            const wsClient = new TachyonWS(directory, values);
+            await wsClient.connect();
+
             const server = startServer();
             const viewUrl = `http://localhost:${server.port}/view`;
             ui.info(`Watching for changes in: ${colors.bold}${directory}${colors.reset}`);
             ui.info(`View PDF at: ${colors.blue}${colors.underline}${viewUrl}${colors.reset}`);
 
-            await compile(directory, values);
+            // Initial compile over WS
+            await wsClient.sendProject();
 
             // Auto-open browser
             const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
             exec(`${openCmd} "${viewUrl}"`);
 
-            let isCompiling = false;
             watch(directory, { recursive: true }, async (event, filename) => {
-                if (filename && !filename.startsWith('.') && !isCompiling) {
+                if (filename && !filename.startsWith('.') && !wsClient.isCompiling) {
                     const ext = extname(filename).toLowerCase();
                     const outputFileName = values.output || 'output.pdf';
 
@@ -82,10 +86,7 @@ ${colors.bold}OPTIONS:${colors.reset}
                     const isOutputFile = basename(filename) === basename(outputFileName);
 
                     if (watchExts.includes(ext) && !isOutputFile) {
-                        isCompiling = true;
-                        console.log(`\n${colors.blue}🔄 Change detected in ${filename}, recompiling...${colors.reset}`);
-                        await compile(directory, values);
-                        isCompiling = false;
+                        await wsClient.sendProject();
                     }
                 }
             });
