@@ -9,82 +9,107 @@
   <meta name="description"
     content="QTEX - Ultra-fast cloud LaTeX compiler. Sub-second compilation. Zero dependencies." />
   <title>QTEX — Cloud LaTeX</title>
-  <link rel="stylesheet" href="/src/style.css" />
 </head>
 
 <body>
   <main>
     <!-- Hero -->
-    <header class="hero">
-      <h1 class="logo">QTEX</h1>
-      <p class="tagline">Cloud LaTeX compiler.<br><span>Sub-second builds.</span> Zero setup.</p>
+    <header class="hero fade-up" data-delay="1">
+      <h1 class="logo">
+        <span>QTEX</span>
+      </h1>
+      <p class="tagline">The cloud LaTeX compiler that's actually <mark>fast</mark>. Zero setup, sub-second builds, pure
+        performance.</p>
     </header>
 
     <!-- Install -->
-    <section class="install">
-      <div class="install-header">
-        <span class="label">INSTALL</span>
-        <div class="os-tabs">
-          <button class="os-tab active" data-os="unix">UNIX</button>
-          <button class="os-tab" data-os="windows">WIN</button>
+    <section class="install fade-up" data-delay="2">
+      <div class="install-nav">
+        <button class="os-tab active" data-os="unix">UNIX</button>
+        <button class="os-tab" data-os="windows">WINDOWS</button>
+      </div>
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div class="dot" style="background: var(--error)"></div>
+          <div class="dot" style="background: var(--accent)"></div>
+          <div class="dot" style="background: var(--secondary)"></div>
+        </div>
+        <div class="terminal-body">
+          <code id="install-command">curl -fsSL https://qtex.sh/install.sh | bash</code>
+          <button class="copy-button" id="copy-btn">COPY</button>
         </div>
       </div>
-      <div class="terminal">
-        <code
-          id="install-command">curl -fsSL https://raw.githubusercontent.com/srsergiolazaro/qtex/main/install.sh | bash</code>
-        <button class="copy-btn" id="copy-btn">COPY</button>
-      </div>
-      <p class="alt">or just: <code>npx qtex ./project</code></p>
+      <p class="mono" style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+        $ npx qtex ./project <span style="color: var(--primary)"># or just use npm</span>
+      </p>
     </section>
 
-    <!-- Features Grid -->
-    <section class="features">
-      <article class="feature">
+    <!-- Features -->
+    <section class="features-grid">
+      <article class="card feature-card fade-up" data-delay="3">
         <span class="feature-icon">⚡</span>
-        <h3>BLAZING FAST</h3>
-        <p>Rust-based Tectonic engine. Compile in milliseconds, not minutes.</p>
+        <h3>Blazing Fast</h3>
+        <p>Powered by a Rust-optimized Tectonic engine. Forget about waiting; compile complex documents in milliseconds.
+        </p>
       </article>
-      <article class="feature">
+
+      <article class="card feature-card fade-up" data-delay="4">
         <span class="feature-icon">📦</span>
-        <h3>ZERO CONFIG</h3>
-        <p>No TeXLive. No MikTeX. No 5GB downloads. Just works.</p>
+        <h3>Zero Config</h3>
+        <p>No 5GB TeXLive downloads. No MikTeX headaches. QTEX fetches only what you need, when you need it.</p>
       </article>
-      <article class="feature">
+
+      <article class="card feature-card fade-up" data-delay="1">
         <span class="feature-icon">👀</span>
-        <h3>WATCH MODE</h3>
-        <p>Auto-recompile on save. Images, .bib, .sty — all watched.</p>
+        <h3>Watch Mode</h3>
+        <p>Instant feedback loop. Save your file, and see the PDF update before you can even switch windows.</p>
       </article>
-      <article class="feature">
+
+      <article class="card feature-card fade-up" data-delay="2">
         <span class="feature-icon">🔒</span>
-        <h3>EPHEMERAL</h3>
-        <p>Stateless processing. Files never stored. Privacy first.</p>
+        <h3>Stateless</h3>
+        <p>Your privacy is paramount. Files are processed in memory and never stored. Compiled and gone.</p>
       </article>
     </section>
 
-    <!-- How it works -->
-    <section class="how">
-      <h2>HOW IT WORKS</h2>
-      <ol class="steps">
-        <li><span>1</span> Scan local files</li>
-        <li><span>2</span> Validate syntax</li>
-        <li><span>3</span> Cloud compile</li>
-        <li><span>4</span> Get your PDF</li>
-      </ol>
+    <!-- Pipeline -->
+    <section class="how-it-works card fade-up" data-delay="3">
+      <h2>The Pipeline</h2>
+      <div class="pipeline">
+        <div class="step">
+          <div class="step-num">01</div>
+          <p class="mono">SCAN SOURCE</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <p class="mono">RESOLVE DEPS</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <p class="mono">CLOUD COMPILE</p>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <p class="mono">STREAM PDF</p>
+        </div>
+      </div>
     </section>
 
-    <!-- CTA -->
-    <section class="cta">
-      <a href="https://github.com/srsergiolazaro/qtex" class="btn" target="_blank">GITHUB →</a>
-      <a href="https://www.npmjs.com/package/qtex" class="btn btn-alt" target="_blank">NPM →</a>
+    <!-- Action -->
+    <section class="cta-area fade-up" data-delay="4">
+      <a href="https://github.com/srsergiolazaro/qtex" class="big-btn dark" target="_blank">EXPLORE GITHUB →</a>
+      <a href="https://www.npmjs.com/package/qtex" class="big-btn" target="_blank">TRY ON NPM →</a>
     </section>
 
     <!-- Footer -->
-    <footer class="footer">
-      <p>Built by <strong>Tachyon-Tex</strong></p>
-      <div class="footer-dots">
-        <span></span>
-        <span></span>
-        <span></span>
+    <footer class="fade-up">
+      <div class="footer-logo">QTEX</div>
+      <div class="status-indicator">
+        <div class="pulse"></div>
+        SYSTEMS OPERATIONAL
+      </div>
+      <div class="social-links mono">
+        BY TACHYON-TEX
       </div>
     </footer>
   </main>

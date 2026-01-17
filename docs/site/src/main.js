@@ -2,8 +2,8 @@ import './style.css'
 
 // OS Detection & Command Switching
 const commands = {
-  unix: 'curl -fsSL https://srsergiolazaro.github.io/qtex/install.sh | bash',
-  windows: 'irm https://srsergiolazaro.github.io/qtex/install.ps1 | iex'
+  unix: 'curl -fsSL https://qtex.sh/install.sh | bash',
+  windows: 'irm https://qtex.sh/install.ps1 | iex'
 }
 
 const tabs = document.querySelectorAll('.os-tab')
@@ -20,7 +20,14 @@ function getOS() {
 // Switch command
 function switchOS(os) {
   tabs.forEach(t => t.classList.toggle('active', t.dataset.os === os))
-  if (commandEl) commandEl.textContent = commands[os]
+  if (commandEl) {
+    commandEl.textContent = commands[os] || commands.unix
+    // Add a small flash effect when switching
+    commandEl.style.color = 'white'
+    setTimeout(() => {
+      commandEl.style.color = 'var(--secondary)'
+    }, 200)
+  }
 }
 
 // Init with detected OS
@@ -28,7 +35,9 @@ switchOS(getOS())
 
 // Tab clicks
 tabs.forEach(tab => {
-  tab.addEventListener('click', () => switchOS(tab.dataset.os))
+  tab.addEventListener('click', () => {
+    switchOS(tab.dataset.os)
+  })
 })
 
 // Copy button
@@ -36,9 +45,30 @@ copyBtn?.addEventListener('click', async () => {
   const text = commandEl?.textContent || ''
   try {
     await navigator.clipboard.writeText(text)
-    copyBtn.textContent = '[COPIED]'
-    setTimeout(() => copyBtn.textContent = '[COPY]', 1500)
+    const originalText = copyBtn.textContent
+    copyBtn.textContent = 'COPIED!'
+    copyBtn.style.background = 'var(--secondary)'
+
+    setTimeout(() => {
+      copyBtn.textContent = originalText
+      copyBtn.style.background = 'var(--accent)'
+    }, 2000)
   } catch (e) {
     console.error('Copy failed:', e)
   }
 })
+
+// Intersection Observer for stagger animations (fallback for CSS if needed)
+const observerOptions = {
+  threshold: 0.1
+}
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible')
+    }
+  })
+}, observerOptions)
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el))
