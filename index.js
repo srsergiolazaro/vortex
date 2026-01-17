@@ -60,8 +60,8 @@ ${colors.bold}OPTIONS:${colors.reset}
         autoUpdate(packageJson.version);
 
         if (values.watch) {
-            startServer();
-            const viewUrl = 'http://localhost:4848/view';
+            const server = startServer();
+            const viewUrl = `http://localhost:${server.port}/view`;
             ui.info(`Watching for changes in: ${colors.bold}${directory}${colors.reset}`);
             ui.info(`View PDF at: ${colors.blue}${colors.underline}${viewUrl}${colors.reset}`);
 
@@ -69,7 +69,7 @@ ${colors.bold}OPTIONS:${colors.reset}
 
             // Auto-open browser
             const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-            exec(`${openCmd} ${viewUrl}`);
+            exec(`${openCmd} "${viewUrl}"`);
 
             let isCompiling = false;
             watch(directory, { recursive: true }, async (event, filename) => {
