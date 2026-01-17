@@ -4,7 +4,9 @@
   "description": "Vortex CLI: Ultra-fast cloud-based LaTeX compilation. Compile LaTeX documents in milliseconds using a high-performance Rust-powered engine without local TeX installation.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "bun build ./index.js --outfile=dist/qtex.js --bundle --minify --target=node",
+    "compile": "bun build ./index.js --compile --outfile=qtex-bin"
   },
   "keywords": [
     "latex",
