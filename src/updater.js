@@ -98,22 +98,24 @@ export async function selfUpdate(currentVersion) {
                 ui.warn(`You are using a version (${colors.bold}v${currentVersion}${colors.reset}) that is ahead of the latest release (${colors.bold}v${latestVersion}${colors.reset}).`);
                 return;
             }
-
             ui.success(`qtex is already up to date (${colors.bold}v${currentVersion}${colors.reset}).`);
             return;
         }
 
-        ui.info(`New version found: ${colors.bold}v${latestVersion}${colors.reset}. Updating...`);
+        ui.info(`New version found: ${colors.bold}v${latestVersion}${colors.reset}. Updating cartbridge...`);
 
-        if (process.platform === 'win32') {
-            const installCmd = `powershell -Command "irm https://raw.githubusercontent.com/${REPO}/main/install.ps1 | iex"`;
-            execSync(installCmd, { stdio: 'inherit' });
-        } else {
-            const installScriptCmd = `curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | bash`;
-            execSync(installScriptCmd, { stdio: 'inherit' });
-        }
+        // location of the current running script (qtex.js)
+        const currentScriptPath = process.argv[1];
 
-        ui.success('qtex has been updated successfully!');
+        // Download new bundle
+        const bundleUrl = `https://github.com/${REPO}/releases/latest/download/qtex.js`;
+        const bundleRes = await fetch(bundleUrl);
+        if (!bundleRes.ok) throw new Error('Failed to download update bundle');
+
+        const newCode = await bundleRes.text();
+        await writeFile(currentScriptPath, newCode);
+
+        ui.success(`qtex updated to v${latestVersion}! (Size: ${(newCode.length / 1024).toFixed(2)} KB)`);
     } catch (error) {
         ui.error(`Update failed: ${error.message}`);
     }

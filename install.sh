@@ -1,11 +1,14 @@
 #!/bin/bash
 
+# Abort on error
 set -e
 
 # --- Configuration ---
 INSTALL_DIR="$HOME/.qtex"
+RUNTIME_DIR="$INSTALL_DIR/runtime"
 BIN_DIR="$INSTALL_DIR/bin"
-BINARY_NAME="qtex"
+QTEX_JS="$INSTALL_DIR/qtex.js"
+SHIM_PATH="$BIN_DIR/qtex"
 REPO="srsergiolazaro/qtex"
 
 # --- Colors ---
@@ -15,63 +18,62 @@ GREEN='\033[0;32m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
-echo -e "${MAGENTA}${BOLD}🌀 qtex Installer${RESET}\n"
+echo -e "${MAGENTA}${BOLD}🌀 qtex Installer (Hybrid Architecture)${RESET}\n"
 
-# 1. Detect OS and Architecture
-OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-ARCH="$(uname -m)"
-
-case "$OS" in
-    darwin)
-        if [ "$ARCH" = "arm64" ]; then
-            ASSET_NAME="qtex-darwin-arm64"
-        else
-            ASSET_NAME="qtex-darwin-x64"
-        fi
-        ;;
-    linux)
-        ASSET_NAME="qtex-linux-x64"
-        ;;
-    *)
-        echo -e "❌ Unsupported OS: $OS. Please install manually or use Windows installer."
-        exit 1
-        ;;
-esac
-
-# 2. Create installation directory
+# 1. Create directories
+mkdir -p "$RUNTIME_DIR"
 mkdir -p "$BIN_DIR"
 
-# 3. Download binary from GitHub
-echo -e "${BLUE}🚚 Downloading $ASSET_NAME from GitHub...${RESET}"
-URL="https://github.com/$REPO/releases/latest/download/$ASSET_NAME"
+# 2. Install Bun (The "Motor")
+BUN_BIN="$RUNTIME_DIR/bun"
 
-# Note: In a real scenario, if the release doesn't exist yet, this might fail.
-# For local dev testing, we could fallback to local build if needed, 
-# but the request asks for the "git downloader" style.
-if ! curl -sSL -o "$BIN_DIR/$BINARY_NAME" "$URL"; then
-    echo -e "⚠️  Could not download from GitHub. Falling back to local build if Bun is present..."
-    if command -v bun &> /dev/null; then
-        bun run compile > /dev/null
-        cp qtex-bin "$BIN_DIR/$BINARY_NAME"
+if [ ! -f "$BUN_BIN" ]; then
+    echo -e "${BLUE}⚙️  Installing Bun Runtime (First time only)...${RESET}"
+    
+    # Detect OS/Arch
+    OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    ARCH="$(uname -m)"
+    
+    if [ "$OS" = "darwin" ]; then
+        if [ "$ARCH" = "arm64" ]; then TARGET="bun-darwin-aarch64"; else TARGET="bun-darwin-x64"; fi
     else
-        echo -e "❌ Download failed and Bun is not installed. Cannot proceed."
-        exit 1
+        TARGET="bun-linux-x64"
     fi
+
+    # Disable pushd/popd output
+    pushd "$RUNTIME_DIR" > /dev/null
+    
+    # Download and extract Bun
+    curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/$TARGET.zip" -o bun.zip
+    unzip -q bun.zip
+    mv "$TARGET/bun" ./bun
+    chmod +x ./bun
+    
+    # Cleanup
+    rm bun.zip
+    rm -rf "$TARGET"
+    
+    popd > /dev/null
 fi
 
-chmod +x "$BIN_DIR/$BINARY_NAME"
+# 3. Download qtex bundle (The "Cartridge")
+echo -e "${BLUE}📦 Downloading latest qtex bundle...${RESET}"
+curl -fsSL "https://github.com/$REPO/releases/latest/download/qtex.js" -o "$QTEX_JS"
 
-# 4. Add to PATH automatically
+# 4. Create Shim (The "Key")
+echo -e "${BLUE}🔌 Creating entry point...${RESET}"
+cat <<EOF > "$SHIM_PATH"
+#!/bin/bash
+exec "$BUN_BIN" run "$QTEX_JS" "\$@"
+EOF
+chmod +x "$SHIM_PATH"
+
+# 5. Add to PATH
 SHELL_CONFIG=""
 case $SHELL in
-    */zsh)
-        SHELL_CONFIG="$HOME/.zshrc"
-        ;;
-    */bash)
-        SHELL_CONFIG="$HOME/.bashrc"
-        ;;
-    *)
-        # Try to guess common ones if $SHELL is weird
+    */zsh) SHELL_CONFIG="$HOME/.zshrc" ;;
+    */bash) SHELL_CONFIG="$HOME/.bashrc" ;;
+    *) 
         if [ -f "$HOME/.zshrc" ]; then SHELL_CONFIG="$HOME/.zshrc";
         elif [ -f "$HOME/.bashrc" ]; then SHELL_CONFIG="$HOME/.bashrc";
         fi
@@ -84,12 +86,10 @@ if [ -n "$SHELL_CONFIG" ]; then
         echo "" >> "$SHELL_CONFIG"
         echo "# qtex binary" >> "$SHELL_CONFIG"
         echo "export PATH=\"$BIN_DIR:\$PATH\"" >> "$SHELL_CONFIG"
-        export PATH="$BIN_DIR:$PATH"
     else
         echo -e "✅ $BIN_DIR is already in your PATH."
     fi
 fi
 
-echo -e "\n${GREEN}${BOLD}✨ qtex installed successfully!${RESET}"
-echo -e "Please run ${BOLD}source $SHELL_CONFIG${RESET} (or restart your terminal) to start using 'qtex'."
-echo -e "Usage example: ${BLUE}qtex ./example --watch${RESET}"
+echo -e "\n${GREEN}${BOLD}✨ qtex installed! Update size reduced by 1000x.${RESET}"
+echo -e "Please run ${BOLD}source $SHELL_CONFIG${RESET} to start using qtex."

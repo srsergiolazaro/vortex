@@ -54,23 +54,15 @@ jobs:
           NEW_TAG=$(git describe --tags --abbrev=0)
           echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
 
-      - name: Build Binaries
+      - name: Build Bundle
         run: |
-          mkdir -p releases
-          # macOS Intel
-          bun build ./index.js --compile --target=bun-darwin-x64 --outfile=releases/qtex-darwin-x64
-          # macOS Silicon
-          bun build ./index.js --compile --target=bun-darwin-arm64 --outfile=releases/qtex-darwin-arm64
-          # Linux x64
-          bun build ./index.js --compile --target=bun-linux-x64 --outfile=releases/qtex-linux-x64
-          # Windows x64
-          bun build ./index.js --compile --target=bun-windows-x64 --outfile=releases/qtex-windows-x64.exe
+          npm run build
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version-bump.outputs.tag }}
-          files: releases/*
+          files: dist/qtex.js
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
