@@ -18,7 +18,16 @@ export class TachyonWS {
     async connect() {
         return new Promise((res, rej) => {
             ui.info(`${colors.cyan}Connecting to Tachyon-Tex Live Engine...${colors.reset}`);
-            this.socket = new WebSocket(this.options.serverUrl || WS_URL);
+
+            let serverUrl = this.options.server || WS_URL;
+            if (serverUrl.startsWith('http')) {
+                serverUrl = serverUrl.replace(/^http/, 'ws');
+                if (!serverUrl.endsWith('/ws')) {
+                    serverUrl = serverUrl.replace(/\/$/, '') + '/ws';
+                }
+            }
+
+            this.socket = new WebSocket(serverUrl);
 
             this.socket.onopen = () => {
                 this.isConnected = true;
@@ -35,7 +44,7 @@ export class TachyonWS {
                     }
 
                     const outputFileName = this.options.output || 'output.pdf';
-                    const outputPath = resolve(process.cwd(), outputFileName);
+                    const outputPath = resolve(process.cwd(), this.directory, outputFileName);
 
                     // Decode base64 PDF
                     const buffer = Buffer.from(data.pdf, 'base64');

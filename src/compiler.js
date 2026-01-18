@@ -26,6 +26,7 @@ async function getFiles(dir, baseDir = dir) {
 
 export async function compile(dir, options) {
     const outputFileName = options.output || 'output.pdf';
+    const serverUrl = options.server || API_BASE;
     const spinner = new Spinner(`${colors.blue}Preparing compilation...`).start();
 
     try {
@@ -63,7 +64,7 @@ export async function compile(dir, options) {
         // Phase 1: Validation
         spinner.update(`${colors.cyan}Validating LaTeX...`);
         try {
-            const validateRes = await fetch(`${API_BASE}/validate`, {
+            const validateRes = await fetch(`${serverUrl}/validate`, {
                 method: 'POST',
                 body: validateForm
             });
@@ -91,7 +92,7 @@ export async function compile(dir, options) {
         // Phase 2: Compilation
         spinner.update(`${colors.cyan}Compiling via Tachyon-Tex API...`);
 
-        const response = await fetch(`${API_BASE}/compile`, {
+        const response = await fetch(`${serverUrl}/compile`, {
             method: 'POST',
             body: form
         });
@@ -101,7 +102,7 @@ export async function compile(dir, options) {
             const compileTime = response.headers.get('x-compile-time-ms') || 'unknown';
             const filesReceived = response.headers.get('x-files-received') || '0';
 
-            const outputPath = resolve(process.cwd(), outputFileName);
+            const outputPath = resolve(process.cwd(), dir, outputFileName);
             await writeFile(outputPath, Buffer.from(buffer));
 
             if (options.watch) {

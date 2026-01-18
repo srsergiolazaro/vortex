@@ -16,6 +16,7 @@ const args = process.argv.slice(2);
 const optionsSchema = {
     watch: { type: 'boolean', short: 'w' },
     output: { type: 'string', short: 'o' },
+    server: { type: 'string', short: 's' },
     help: { type: 'boolean', short: 'h' },
     update: { type: 'boolean', short: 'u' },
     version: { type: 'boolean', short: 'v' }
@@ -41,6 +42,7 @@ ${colors.bold}USAGE:${colors.reset}
 ${colors.bold}OPTIONS:${colors.reset}
   -w, --watch           Watch for changes and recompile
   -o, --output <file>   Define output filename (default: output.pdf)
+  -s, --server <url>    Specify Tachyon-Tex server URL
   -u, --update          Update to the latest version
   -v, --version         Show version information
   -h, --help            Show this help message
@@ -55,6 +57,10 @@ ${colors.bold}OPTIONS:${colors.reset}
 
         const directory = positionals[0] || '.';
         console.log(`${colors.magenta}${colors.bold}\n🌀 qtex CLI v${packageJson.version} (Vanilla)${colors.reset}\n`);
+
+        if (values.server) {
+            ui.info(`Using compilation server: ${colors.bold}${values.server}${colors.reset}`);
+        }
 
         // Check for updates in the background
         autoUpdate(packageJson.version);
