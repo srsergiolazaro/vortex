@@ -107,6 +107,11 @@ export async function compile(dir, options) {
             // Validation service unavailable, proceed anyway
         }
 
+        if (options.verify) {
+            spinner.succeed(`${colors.green}Validation complete!${colors.reset}`);
+            return;
+        }
+
         // Phase 2: Compilation
         spinner.update(`${colors.cyan}Compiling via Tachyon-Tex API...`);
 

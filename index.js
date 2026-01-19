@@ -19,7 +19,8 @@ const optionsSchema = {
     server: { type: 'string', short: 's' },
     help: { type: 'boolean', short: 'h' },
     update: { type: 'boolean', short: 'u' },
-    version: { type: 'boolean', short: 'v' }
+    version: { type: 'boolean', short: 'v' },
+    verify: { type: 'boolean' }
 };
 
 async function main() {
@@ -45,6 +46,7 @@ ${colors.bold}OPTIONS:${colors.reset}
   -s, --server <url>    Specify Tachyon-Tex server URL
   -u, --update          Update to the latest version
   -v, --version         Show version information
+  --verify              Only verify LaTeX without compiling
   -h, --help            Show this help message
             `);
             process.exit(0);
