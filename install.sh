@@ -27,6 +27,14 @@ mkdir -p "$BIN_DIR"
 # 2. Install Bun (The "Motor")
 BUN_BIN="$RUNTIME_DIR/bun"
 
+# Check if existing Bun is broken
+if [ -f "$BUN_BIN" ]; then
+    if ! "$BUN_BIN" --version >/dev/null 2>&1; then
+        echo -e "${MAGENTA}⚠️  Existing Bun runtime is broken or incompatible. Reinstalling...${RESET}"
+        rm -f "$BUN_BIN"
+    fi
+fi
+
 if [ ! -f "$BUN_BIN" ]; then
     echo -e "${BLUE}⚙️  Installing Bun Runtime (First time only)...${RESET}"
     

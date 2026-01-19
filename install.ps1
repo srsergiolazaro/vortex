@@ -15,6 +15,17 @@ if (Test-Path "$BinDir\qtex.exe") { Remove-Item "$BinDir\qtex.exe" -Force -Error
 
 # 3. Download/Install Bun Engine (The "Motor")
 $BunPath = Join-Path $RuntimeDir "bun.exe"
+
+# Check if existing Bun is broken
+if (Test-Path $BunPath) {
+    try {
+        & $BunPath --version | Out-Null
+    } catch {
+        Write-Host "⚠️  Existing Bun runtime is broken or incompatible. Reinstalling..." -ForegroundColor Yellow
+        Remove-Item $BunPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 if (-not (Test-Path $BunPath)) {
     Write-Host "⚙️  Installing Bun Runtime (First time only)..." -ForegroundColor Blue
     try {
@@ -29,7 +40,7 @@ if (-not (Test-Path $BunPath)) {
         Remove-Item "$RuntimeDir\bun-windows-x64" -Recurse -Force
     } catch {
         Write-Host "❌ Failed to install Bun runtime." -ForegroundColor Red
-        exit 1
+        return
     }
 }
 
@@ -42,7 +53,7 @@ try {
     Invoke-WebRequest -Uri $Url -OutFile $QtexJs -ErrorAction Stop
 } catch {
      Write-Host "❌ Failed to download qtex.js from latest release." -ForegroundColor Red
-     exit 1
+     return
 }
 
 # 5. Create Shim (The "Key")
