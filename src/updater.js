@@ -2,13 +2,27 @@ import { execSync, spawn } from 'node:child_process';
 import { colors, ui } from './ui.js';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, chmod } from 'node:fs/promises';
 
 const REPO = 'srsergiolazaro/qtex';
 const STATE_DIR = join(homedir(), '.qtex');
 const INSTALL_DIR = join(STATE_DIR, 'bin');
 const STATE_FILE = join(STATE_DIR, 'state.json');
 const BINARY_NAME = process.platform === 'win32' ? 'qtex.exe' : 'qtex';
+
+function getAssetName() {
+    const os = process.platform;
+    const arch = process.arch;
+
+    if (os === 'darwin') {
+        return arch === 'arm64' ? 'qtex-darwin-arm64' : 'qtex-darwin-x64';
+    } else if (os === 'linux') {
+        return 'qtex-linux-x64';
+    } else if (os === 'win32') {
+        return 'qtex-win-x64.exe';
+    }
+    return 'qtex.js';
+}
 
 async function getState() {
     try {
@@ -104,20 +118,41 @@ export async function selfUpdate(currentVersion) {
             return;
         }
 
-        ui.info(`New version found: ${colors.bold}v${latestVersion}${colors.reset}. Updating cartbridge...`);
+        ui.info(`New version found: ${colors.bold}v${latestVersion}${colors.reset}. Updating...`);
 
-        // location of the current running script (qtex.js)
-        const currentScriptPath = process.argv[1];
+        // Detect if we are running as a compiled binary or a script
+        const isBinary = !process.argv[1] || process.argv[1].startsWith('/$bunfs') || !process.argv[1].endsWith('.js');
+        const targetPath = isBinary ? process.execPath : process.argv[1];
 
-        // Download new bundle
-        const bundleUrl = `https://github.com/${REPO}/releases/latest/download/qtex.js`;
-        const bundleRes = await fetch(bundleUrl);
-        if (!bundleRes.ok) throw new Error('Failed to download update bundle');
+        const assetName = isBinary ? getAssetName() : 'qtex.js';
+        const url = `https://github.com/${REPO}/releases/latest/download/${assetName}`;
 
-        const newCode = await bundleRes.text();
-        await writeFile(currentScriptPath, newCode);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to download update: ${response.statusText}`);
 
-        ui.success(`qtex updated to v${latestVersion}! (Size: ${(newCode.length / 1024).toFixed(2)} KB)`);
+        const buffer = await response.arrayBuffer();
+
+        // Write to a temporary file first to avoid corruption if the process is killed
+        const tempPath = targetPath + '.tmp';
+        await writeFile(tempPath, Buffer.from(buffer));
+
+        // On Unix, ensure it's executable
+        if (process.platform !== 'win32') {
+            await chmod(tempPath, 0o755);
+        }
+
+        // Rename temp to target
+        const { renameSync } = await import('node:fs');
+        try {
+            renameSync(tempPath, targetPath);
+        } catch (e) {
+            // If direct rename fails (busy file on Windows), we might need to use a different strategy
+            // but for now, this is standard.
+            await writeFile(targetPath, Buffer.from(buffer));
+        }
+
+        ui.success(`qtex updated to v${latestVersion}! (Size: ${(buffer.byteLength / 1024).toFixed(2)} KB)`);
+        ui.info('Please restart qtex to use the new version.');
     } catch (error) {
         ui.error(`Update failed: ${error.message}`);
     }
