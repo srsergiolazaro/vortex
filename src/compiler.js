@@ -50,7 +50,13 @@ export async function compile(dir, options) {
 
         for (const fileObj of allFiles) {
             const ext = extname(fileObj.path).toLowerCase();
-            const allowedExts = ['.tex', '.bib', '.sty', '.cls', '.pdf', '.png', '.jpg', '.jpeg'];
+            const allowedExts = [
+                '.tex', '.bib', '.sty', '.cls', '.bst',               // LaTeX & BibTeX
+                '.pdf', '.png', '.jpg', '.jpeg', '.eps',              // Images
+                '.csv', '.dat', '.tsv', '.txt',                       // Data
+                '.tikz',                                              // TikZ
+                '.otf', '.ttf'                                        // Fonts
+            ];
 
             if (allowedExts.includes(ext)) {
                 // Skip the output file to avoid re-uploading it in subsequent runs
