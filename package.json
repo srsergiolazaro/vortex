@@ -1,6 +1,6 @@
 {
   "name": "qtex",
-  "version": "1.1.19",
+  "version": "1.1.20",
   "description": "Ultra-fast cloud LaTeX compiler. Compile .tex documents in milliseconds without installing TeXLive or MikTeX. Zero config, sub-second builds, live watch mode.",
   "main": "index.js",
   "scripts": {
