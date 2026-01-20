@@ -74,9 +74,81 @@ pub fn cleanup_old_versions(current_version: &str) -> std::io::Result<()> {
 }
 
 pub async fn self_update() -> Result<(), Box<dyn std::error::Error>> {
-    ui::info("Checking for updates...");
-    // Future implementation: Fetch latest version from GitHub/API
-    // Download and install to versioned folder
-    // For now, it's a stub to keep feature parity with updater.js
+    let current_version = env!("CARGO_PKG_VERSION");
+    ui::info(&format!("Checking for updates... (Current: v{})", current_version));
+
+    let client = reqwest::Client::builder()
+        .user_agent("qtex-cli")
+        .build()?;
+
+    let release: serde_json::Value = client
+        .get("https://api.github.com/repos/srsergiolazaro/qtex/releases/latest")
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let latest_version = release["tag_name"].as_str().unwrap_or("").trim_start_matches('v');
+    
+    if latest_version.is_empty() {
+        ui::error("Could not determine latest version from GitHub.");
+        return Ok(());
+    }
+
+    if latest_version == current_version {
+        ui::info("You are already on the latest version.");
+        return Ok(());
+    }
+
+    ui::info(&format!("New version available: v{}", latest_version));
+    
+    // Determine asset name based on platform
+    let asset_name = if cfg!(target_os = "windows") {
+        "qtex-windows-x64.exe"
+    } else if cfg!(target_os = "macos") {
+        if cfg!(target_arch = "aarch64") { "qtex-darwin-arm64" } else { "qtex-darwin-x64" }
+    } else {
+        if cfg!(target_env = "musl") { "qtex-linux-x64-musl" } else { "qtex-linux-x64" }
+    };
+
+    let asset = release["assets"]
+        .as_array()
+        .and_then(|assets| {
+            assets.iter().find(|a| a["name"].as_str() == Some(asset_name))
+        });
+
+    if let Some(asset) = asset {
+        let download_url = asset["browser_download_url"].as_str().unwrap_or("");
+        ui::info(&format!("Downloading {}...", asset_name));
+        
+        let response = client.get(download_url).send().await?;
+        let bytes = response.bytes().await?;
+
+        let qtex_dir = get_qtex_dir();
+        let bin_dir = qtex_dir.join("bin");
+        let binary_path = bin_dir.join(if cfg!(target_os = "windows") { "qtex.exe" } else { "qtex" });
+
+        // Ensure bin directory exists
+        fs::create_dir_all(&bin_dir)?;
+
+        // Write new binary
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::write(&binary_path, &bytes)?;
+            let mut perms = fs::metadata(&binary_path)?.permissions();
+            perms.set_mode(0o755);
+            fs::set_permissions(&binary_path, perms)?;
+        }
+        #[cfg(not(unix))]
+        {
+            fs::write(&binary_path, &bytes)?;
+        }
+
+        ui::info(&format!("Successfully updated to v{}!", latest_version));
+    } else {
+        ui::error(&format!("Could not find binary for {} in the latest release.", asset_name));
+    }
+
     Ok(())
 }
