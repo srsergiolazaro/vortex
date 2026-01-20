@@ -1,62 +1,119 @@
 name: Build and Release
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - rust-conversion
-    tags:
-      - 'v*'
+  workflow_dispatch: # Disparador manual con opción de elegir el tipo de incremento
+    inputs:
+      bump:
+        description: 'Tipo de incremento (patch, minor, major)'
+        default: 'patch'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  bump-and-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      new_tag: ${{ steps.bump.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Calculate and Apply Version Bump
+        id: bump
+        run: |
+          # 1. Obtener versión de Cargo.toml
+          CARGO_VERSION=$(grep '^version =' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "Versión en Cargo.toml: $CARGO_VERSION"
+          
+          # 2. Obtener la última versión de los tags de git
+          git fetch --tags
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1 | sed 's/^v//')
+          echo "Último tag detectado: $LATEST_TAG"
+          
+          # 3. Elegir la versión base (la mayor entre Cargo y Tags)
+          if [ -z "$LATEST_TAG" ]; then
+            BASE_VERSION=$CARGO_VERSION
+          else
+            # Comparar versiones de forma simple
+            if [[ "$(printf '%s\n%s' "$CARGO_VERSION" "$LATEST_TAG" | sort -V | tail -n1)" == "$CARGO_VERSION" ]]; then
+              BASE_VERSION=$CARGO_VERSION
+            else
+              BASE_VERSION=$LATEST_TAG
+            fi
+          fi
+          echo "Versión base para el incremento: $BASE_VERSION"
+          
+          # 4. Incrementar versión
+          IFS='.' read -r major minor patch <<< "$BASE_VERSION"
+          if [[ "${{ github.event.inputs.bump }}" == "major" ]]; then
+            major=$((major + 1)); minor=0; patch=0
+          elif [[ "${{ github.event.inputs.bump }}" == "minor" ]]; then
+            minor=$((minor + 1)); patch=0
+          else
+            patch=$((patch + 1))
+          fi
+          
+          NEW_VERSION="$major.$minor.$patch"
+          NEW_TAG="v$NEW_VERSION"
+          echo "Nueva versión calculada: $NEW_VERSION"
+          
+          # 5. Guardar cambios en Cargo.toml
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" Cargo.toml
+          
+          # 6. Git Commit & Push Tag
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          git commit -m "chore: release $NEW_TAG" || echo "No hay cambios que commitear"
+          git push origin ${{ github.ref_name }}
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+  build-macos:
+    needs: bump-and-tag
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            target: x86_64-apple-darwin
+          - target: x86_64-apple-darwin
             artifact: qtex-darwin-x64
-          - os: macos-latest
-            target: aarch64-apple-darwin
+          - target: aarch64-apple-darwin
             artifact: qtex-darwin-arm64
-
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
-
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump-and-tag.outputs.new_tag }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      # CACHING: Esto reduce el coste y tiempo de build enormemente
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
 
-      - name: Install musl-tools (Linux musl)
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-
       - name: Build release binary
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Prepare artifact (Unix)
-        if: runner.os != 'Windows'
+      - name: Prepare artifact
         run: |
           cp target/${{ matrix.target }}/release/qtex ${{ matrix.artifact }}
           chmod +x ${{ matrix.artifact }}
-
-      - name: Prepare artifact (Windows)
-        if: runner.os == 'Windows'
-        run: copy target\${{ matrix.target }}\release\qtex.exe ${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -65,16 +122,16 @@ jobs:
           path: ${{ matrix.artifact }}
 
   release:
-    needs: build
+    needs: [bump-and-tag, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump-and-tag.outputs.new_tag }}
 
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: releases
@@ -83,12 +140,17 @@ jobs:
         run: |
           mkdir -p release-files
           find releases -type f -exec cp {} release-files/ \;
-          ls -R release-files/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.bump-and-tag.outputs.new_tag }}
+          name: Release ${{ needs.bump-and-tag.outputs.new_tag }}
           files: release-files/*
+          body: |
+            Automated release for version ${{ needs.bump-and-tag.outputs.new_version }}.
+            
+            **Nota:** Los binarios de Windows y Linux están siendo procesados localmente y se añadirán en breve.
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
