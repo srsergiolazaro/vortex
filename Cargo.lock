@@ -1165,7 +1165,7 @@ dependencies = [
 
 [[package]]
 name = "qtex"
-version = "1.1.29"
+version = "1.1.32"
 dependencies = [
  "axum",
  "clap",
