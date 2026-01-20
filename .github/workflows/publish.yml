@@ -1,15 +1,10 @@
 name: Build and Release
 
 on:
+  workflow_dispatch: # Permite ejecutarlo manualmente desde la pestaña Actions
   push:
-    branches:
-      - rust-conversion
-    paths-ignore:
-      - "docs/**"
-      - ".github/workflows/deploy-pages.yml"
-      - "README.md"
-      - "LICENSE"
-      - ".gitignore"
+    tags:
+      - 'v*' # Solo se ejecuta cuando subes un tag como v1.1.30
 
 env:
   CARGO_TERM_COLOR: always
@@ -41,13 +36,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      # CACHING: Esto reduce el coste y tiempo de build enormemente
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
 
       - name: Install musl-tools (Linux musl)
         if: matrix.target == 'x86_64-unknown-linux-musl'
@@ -64,7 +63,7 @@ jobs:
 
       - name: Prepare artifact (Windows)
         if: runner.os == 'Windows'
-        run: cp target/${{ matrix.target }}/release/qtex.exe ${{ matrix.artifact }}
+        run: copy target\${{ matrix.target }}\release\qtex.exe ${{ matrix.artifact }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -77,44 +76,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get version from Cargo.toml
-        id: get-version
-        run: |
-          VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Bump version
-        id: version-bump
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # Read current version
-          CURRENT=$(grep '^version' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          
-          # Bump patch version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-          
-          # Update Cargo.toml
-          sed -i "s/^version = \"$CURRENT\"/version = \"$NEW_VERSION\"/" Cargo.toml
-          
-          # Commit and tag
-          git add Cargo.toml
-          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
-          git tag "v$NEW_VERSION"
-          git push origin main --tags
-          
-          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -124,16 +89,12 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release-files
-          for dir in releases/*/; do
-            cp "$dir"* release-files/ || true
-          done
-          ls -la release-files/
+          find releases -type f -exec cp {} release-files/ \;
+          ls -R release-files/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version-bump.outputs.tag }}
-          name: Release ${{ steps.version-bump.outputs.version }}
           files: release-files/*
           generate_release_notes: true
         env:
