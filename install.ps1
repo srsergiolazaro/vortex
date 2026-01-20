@@ -6,6 +6,13 @@ $Repo = "srsergiolazaro/qtex"
 
 Write-Host "🌀 qtex Installer (Rust Edition)" -ForegroundColor Magenta
 
+# 0. Check for PATH conflicts (Cargo version)
+$CargoBin = Join-Path $HOME ".cargo\bin\qtex.exe"
+if (Test-Path $CargoBin) {
+    Write-Host "⚠️  Warning: A development version of qtex was found in your Cargo bin folder." -ForegroundColor Yellow
+    Write-Host "   This will override the official installation. Run 'cargo uninstall qtex' to fix this." -ForegroundColor Gray
+}
+
 # 2. Preparation & Clean Up
 # Resolve conflict with old hybrid installation
 if (Test-Path (Join-Path $InstallDir "runtime")) {
@@ -15,14 +22,20 @@ if (Test-Path (Join-Path $InstallDir "runtime")) {
 
 if (-not (Test-Path $BinDir)) { New-Item -ItemType Directory -Path $BinDir -Force | Out-Null }
 
-# 3. Download standalone binary from GitHub Releases
-Write-Host "🚚 Downloading qtex-windows-x64.exe from GitHub Releases..." -ForegroundColor Blue
+# 3. Get Latest Version and Download
 try {
-    $Url = "https://github.com/$Repo/releases/latest/download/qtex-windows-x64.exe"
+    Write-Host "🔍 Checking for latest version..." -ForegroundColor Gray
+    $ReleaseInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
+    $LatestVersion = $ReleaseInfo.tag_name
+    
+    Write-Host "🚚 Installing qtex $LatestVersion..." -ForegroundColor Blue
+    $Url = "https://github.com/$Repo/releases/download/$LatestVersion/qtex-windows-x64.exe"
     Invoke-WebRequest -Uri $Url -OutFile (Join-Path $BinDir $BinaryName) -ErrorAction Stop
 } catch {
-    Write-Host "❌ Download failed from GitHub. Please check your connection." -ForegroundColor Red
-    return
+    # Fallback to 'latest' redirect if API fails
+    Write-Host "⚠️  Could not fetch version info, downloading latest build..." -ForegroundColor Yellow
+    $Url = "https://github.com/$Repo/releases/latest/download/qtex-windows-x64.exe"
+    Invoke-WebRequest -Uri $Url -OutFile (Join-Path $BinDir $BinaryName) -ErrorAction Stop
 }
 
 # 4. Add to PATH
