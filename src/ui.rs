@@ -9,9 +9,9 @@ pub struct Spinner {
 impl Spinner {
     pub fn new(msg: &str) -> Self {
         let pb = ProgressBar::new_spinner();
-        pb.enable_steady_tick(Duration::from_millis(120));
+        pb.enable_steady_tick(Duration::from_millis(100));
         pb.set_style(
-            ProgressStyle::with_template("{spinner:.blue} {msg}")
+            ProgressStyle::with_template("{spinner:.cyan} {msg}")
                 .unwrap()
                 .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]),
         );
@@ -30,21 +30,12 @@ impl Spinner {
     pub fn fail(&self, msg: &str) {
         self.pb.finish_with_message(format!("{} {}", "✖".red(), msg));
     }
-
-    pub fn stop(&self) {
-        self.pb.finish_and_clear();
-    }
 }
 
 pub fn info(msg: &str) {
     println!("{} {}", "ℹ".blue(), msg);
 }
 
-pub fn warn(msg: &str) {
-    println!("{} {}", "⚠".yellow(), msg);
-}
-
 pub fn error(msg: &str) {
     eprintln!("{} {}", "✖".red(), msg);
 }
-
